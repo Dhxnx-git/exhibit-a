@@ -1,0 +1,33 @@
+# Secrets and local config — never committed. If you find yourself deleting
+# a line from this section, close the laptop and take a walk.
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+credentials*.json
+service-account*.json
+
+# Python build/runtime noise
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.exhibit-venv/
+
+# exhibit-a working artifacts (workspaces are throwaway copies of target repos)
+.exhibit-work/
+exhibit-out/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Editor/OS droppings
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

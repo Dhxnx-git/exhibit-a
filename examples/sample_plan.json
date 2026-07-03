@@ -1,0 +1,12 @@
+{
+  "title": "split_bill drops remainder cents; splits don't sum to total",
+  "symptom_kind": "wrong_value",
+  "expected": "sum(split_bill(total, n)) == total for all inputs",
+  "actual": "sum(split_bill(100, 3)) == 99, not 100 -- a cent disappears",
+  "steps": ["call split_bill(100, 3)", "sum the result", "compare to 100"],
+  "exception_type": null,
+  "symptom_keywords": ["split_bill", "remainder"],
+  "affected_symbols": ["split_bill"],
+  "known_good_ref": null,
+  "needs_info": []
+}

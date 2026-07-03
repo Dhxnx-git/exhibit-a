@@ -1,0 +1,7 @@
+[
+  {
+    "label": "slugify-is-actually-fine",
+    "rationale": "A report claiming slugify is broken -- but the code is correct, so this test passes and proves nothing.",
+    "code": "from buggy_calc import slugify\n\n\ndef test_slugify_basic():\n    # The report claims this returns the wrong value. It does not.\n    assert slugify('Hello World') == 'hello-world'\n"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "label": "sum-equals-total",
+    "rationale": "The splits must sum back to the original total; floor division breaks this.",
+    "code": "from buggy_calc import split_bill\n\n\ndef test_split_bill_conserves_total():\n    total = 100\n    splits = split_bill(total, 3)\n    assert sum(splits) == total, f\"expected splits to sum to {total}, got {sum(splits)}\"\n"
+  }
+]

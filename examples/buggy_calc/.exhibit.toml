@@ -1,0 +1,8 @@
+# exhibit-a config for the demo package.
+[exhibit]
+framework = "pytest"
+test_dir = "tests"
+setup = [["python", "-m", "pip", "install", "-e", "."]]
+test_command = ["python", "-m", "pytest", "{test_file}", "-q"]
+timeout_seconds = 120
+runs = 3

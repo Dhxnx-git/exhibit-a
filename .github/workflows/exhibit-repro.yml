@@ -1,0 +1,107 @@
+# exhibit-a — reproduce a bug report and post a receipt.
+#
+# The security story is expressed as TWO JOBS with different privileges:
+#
+#   reproduce:  has the model API key, runs the agent + generated tests,
+#               is exposed to attacker-controlled issue text — but has
+#               permissions: {} (no GITHUB_TOKEN write access to anything).
+#   comment:    has issues:write, runs NO model and NO repo code, just uploads
+#               the receipt file the first job produced.
+#
+# Privilege and exposure never share a job. See action/post_receipt.py.
+
+name: exhibit-a repro
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+# Default: give the whole workflow nothing. Each job opts into the minimum.
+permissions: {}
+
+jobs:
+  reproduce:
+    # Trigger on the `repro` label OR a `/repro` comment from someone who can
+    # write to the repo (maintainer-gated — a random commenter can't fire it).
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'repro') ||
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '/repro') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    runs-on: ubuntu-latest
+    permissions: {}          # <-- the agent job holds no repo privileges
+    outputs:
+      status: ${{ steps.run.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # don't leave a pushable token in .git
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install exhibit-a
+        run: pip install exhibit-a-bot[llm]
+
+      - name: Write the issue to a file (as data, never as a command)
+        env:
+          # Passing via env, not string-interpolated into the shell, is the
+          # difference between "data" and "arbitrary code execution".
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          {
+            echo "# ${ISSUE_TITLE}"
+            echo ""
+            echo "${ISSUE_BODY}"
+          } > issue.md
+
+      - name: Reproduce
+        id: run
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          exhibit run --repo . --issue-file issue.md --llm --out receipt.md
+          code=$?
+          case $code in
+            0)  echo "status=confirmed" >> "$GITHUB_OUTPUT" ;;
+            10) echo "status=unreproducible" >> "$GITHUB_OUTPUT" ;;
+            11) echo "status=needs_info" >> "$GITHUB_OUTPUT" ;;
+            12) echo "status=env_failed" >> "$GITHUB_OUTPUT" ;;
+            *)  echo "status=error" >> "$GITHUB_OUTPUT" ;;
+          esac
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exhibit-receipt
+          path: receipt.md
+          if-no-files-found: warn
+
+  comment:
+    needs: reproduce
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write          # <-- the ONLY write scope, and only this job has it
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: exhibit-receipt
+        continue-on-error: true
+
+      - name: Fetch the poster (pinned to the installed package version)
+        run: pip download exhibit-a-bot --no-deps --no-binary :all: -d /tmp/pkg || true
+
+      - name: Post the receipt
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          EXHIBIT_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EXHIBIT_RECEIPT: receipt.md
+        # The poster is stdlib-only; run it straight from the installed package.
+        run: |
+          pip install exhibit-a-bot >/dev/null 2>&1 || true
+          python -m exhibit_a.action_post

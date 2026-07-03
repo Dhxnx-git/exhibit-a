@@ -1,0 +1,12 @@
+{
+  "title": "slugify mangles multi-word titles",
+  "symptom_kind": "wrong_value",
+  "expected": "slugify('Hello World') == 'hello-world'",
+  "actual": "reporter claims it returns something else",
+  "steps": ["call slugify('Hello World')"],
+  "exception_type": null,
+  "symptom_keywords": ["slugify"],
+  "affected_symbols": ["slugify"],
+  "known_good_ref": null,
+  "needs_info": []
+}
