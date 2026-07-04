@@ -176,4 +176,4 @@ Every non-obvious block has a comment explaining why it exists, because this rep
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Built by Dhanush Musunuru. Named exhibit-a because a confirmed bug report should come with evidence. 🧾
+MIT, see [LICENSE](LICENSE). Built by Dhanush Musunuru. Named exhibit-a because a confirmed bug report should come with evidence. 🧾 i hope this helps lol
